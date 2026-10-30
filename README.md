@@ -70,6 +70,8 @@ docker compose down         # stop (add -v to delete the data volume)
 pnpm install          # from the repository root
 pnpm dev:web          # http://localhost:3000
 pnpm lint:web
+pnpm typecheck:web    # generates Next.js route types, then runs tsc
+pnpm test:web         # Vitest + Testing Library (jsdom)
 pnpm build:web
 ```
 
@@ -83,5 +85,10 @@ uv run uvicorn app.main:app --reload   # http://localhost:8000/health and /healt
 uv run pytest -m "not integration"     # unit tests only, no Docker needed
 uv run pytest                          # all tests; integration tests start a PostgreSQL Testcontainer
 uv run ruff check .
+uv run ruff format --check .
 uv run mypy app
 ```
+
+### Continuous Integration
+
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, type checks, tests and the web build on every push to `main` and every pull request.

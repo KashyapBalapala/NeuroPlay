@@ -6,7 +6,10 @@ import type { HandFrame } from "./types";
 import { useHandTracking } from "./useHandTracking";
 
 // Real MediaPipe inference cannot run in jsdom; the landmarker is mocked.
-vi.mock("./handLandmarker", () => ({ createHandTracker: vi.fn() }));
+vi.mock("./handLandmarker", () => ({
+  createHandTracker: vi.fn(),
+  HAND_CONNECTIONS: [{ start: 0, end: 1 }],
+}));
 const createTracker = vi.mocked(createHandTracker);
 
 // jsdom has no requestVideoFrameCallback, so the hook uses requestAnimationFrame,
@@ -56,6 +59,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   createTracker.mockReset();
 });
 
@@ -164,6 +168,71 @@ describe("useHandTracking", () => {
     expect(result.current.status).toBe("loading-model");
     await waitFor(() => expect(result.current.status).toBe("ready"));
     expect(createTracker).toHaveBeenCalledTimes(2);
+  });
+
+  test("draws every frame but re-renders at most 4 times per second", async () => {
+    const tracker = fakeTracker();
+    tracker.detect.mockImplementation((_video, timestamp) => ({
+      timestamp,
+      inferenceMs: 2,
+      hands: [
+        {
+          landmarks: [
+            { x: 0.4, y: 0.4, z: 0 },
+            { x: 0.6, y: 0.6, z: 0 },
+          ],
+          worldLandmarks: [],
+          handedness: { label: "Right", score: 0.9 },
+          hand: "right",
+        },
+      ],
+    }));
+    createTracker.mockResolvedValueOnce(tracker);
+
+    const context = {
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+    };
+    const canvas = document.createElement("canvas");
+    vi.spyOn(canvas, "getContext").mockReturnValue(
+      context as unknown as CanvasRenderingContext2D,
+    );
+    const overlayRef = { current: canvas };
+
+    const camera = fakeVideo();
+    let renders = 0;
+    const hook = renderHook(() => {
+      renders++;
+      return useHandTracking(camera.video, { overlayRef });
+    });
+    await waitFor(() => expect(hook.result.current.status).toBe("ready"));
+
+    // 120 frames at 30 fps = 4 seconds of video.
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => now);
+    const rendersBefore = renders;
+    for (let i = 0; i < 120; i++) {
+      now += 1000 / 30;
+      camera.nextFrame();
+      tick();
+    }
+
+    expect(tracker.detect).toHaveBeenCalledTimes(120);
+    expect(context.clearRect).toHaveBeenCalledTimes(120);
+    expect(context.arc).toHaveBeenCalledTimes(240);
+    // One snapshot per 250 ms over 4 s, plus the first frame.
+    expect(renders - rendersBefore).toBeLessThanOrEqual(17);
+    expect(hook.result.current.latestFrameRef.current?.timestamp).toBe(now);
+    expect(hook.result.current.status).toBe("tracking");
+
+    // Stopping clears the overlay so no stale landmarks stay on screen.
+    hook.unmount();
+    expect(context.clearRect).toHaveBeenCalledTimes(121);
   });
 
   test("moves to model-error when detection throws", async () => {

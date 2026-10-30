@@ -53,6 +53,8 @@ Camera and tracking features follow these rules:
 - The camera is only requested after the user presses a button, never on page load.
 - All camera tracks are stopped when the user stops the camera, leaves the page or the component unmounts, so the camera indicator light turns off.
 
+See [docs/privacy.md](docs/privacy.md) for details, including why the CSP must not be loosened without review.
+
 ## Getting Started
 
 ### Prerequisites
@@ -85,7 +87,7 @@ pnpm test:web         # Vitest + Testing Library (jsdom)
 pnpm build:web
 ```
 
-Open http://localhost:3000/camera-check to test webcam access, permissions and device selection, and http://localhost:3000/tracking-check to test hand tracking (landmark overlay, detected hand, confidence, frame rate and inference time). Camera access needs HTTPS or `localhost`.
+Open http://localhost:3000/camera-check to test webcam access, permissions and device selection, and http://localhost:3000/tracking-check to test hand tracking (landmark overlay, detected hand, handedness confidence, landmarks inside the frame, hand size, frame rate, inference time and loop time). Camera access needs HTTPS or `localhost`.
 
 `dev`, `build` and `test` first copy MediaPipe's WASM files from `node_modules` into `apps/web/public/mediapipe/wasm/` (Git-ignored). The hand model is committed at `apps/web/public/models/hand_landmarker.task`; see [docs/models.md](docs/models.md).
 

@@ -7,14 +7,22 @@ import { CameraPreview } from "@/features/camera/CameraPreview";
 import { CAMERA_MESSAGES } from "@/features/camera/messages";
 import { useCamera } from "@/features/camera/useCamera";
 import { HandOverlay } from "@/features/tracking/HandOverlay";
-import { classifyFrame, STATS_WINDOW_MS } from "@/features/tracking/quality";
+import {
+  classifyFrame,
+  handSize,
+  landmarkCoverage,
+  STATS_WINDOW_MS,
+} from "@/features/tracking/quality";
 import type { FrameQuality } from "@/features/tracking/types";
 import { useHandTracking } from "@/features/tracking/useHandTracking";
 
 const TRACKING_MESSAGES: Record<FrameQuality, string> = {
   tracking: "Hand detected",
   "no-hand": "Move your hand into view",
-  "low-confidence": "Hand partly visible — try better lighting",
+  "partly-out-of-frame": "Move your hand fully into view",
+  "too-far": "Move your hand closer to the camera",
+  "low-handedness-confidence":
+    "Hand hard to recognise — try better lighting or hold it flat to the camera",
 };
 
 // Tracking state can flip every frame; only announce it once it has settled.
@@ -41,7 +49,10 @@ function formatNumber(value: number | undefined, unit: string): string {
 export default function TrackingCheckPage() {
   const camera = useCamera();
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
-  const tracking = useHandTracking(camera.status === "active" ? video : null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const tracking = useHandTracking(camera.status === "active" ? video : null, {
+    overlayRef,
+  });
   const cameraMessage = CAMERA_MESSAGES[camera.status];
   const primaryButtonRef = useRef<HTMLButtonElement>(null);
   const isFirstRender = useRef(true);
@@ -135,7 +146,7 @@ export default function TrackingCheckPage() {
       {camera.status === "active" && camera.stream && (
         <div className="flex flex-col gap-4">
           <CameraPreview stream={camera.stream} onVideoElement={setVideo}>
-            {video && <HandOverlay video={video} frame={tracking.frame} />}
+            {video && <HandOverlay ref={overlayRef} />}
           </CameraPreview>
           <button
             ref={primaryButtonRef}
@@ -163,9 +174,21 @@ export default function TrackingCheckPage() {
                 ? "Right"
                 : "—"}
           </dd>
-          <dt>Confidence</dt>
+          <dt>Handedness confidence</dt>
           <dd>
             {hand ? `${Math.round(hand.handedness.score * 100)}%` : "—"}
+          </dd>
+          <dt>Landmarks inside frame</dt>
+          <dd>
+            {hand
+              ? `${Math.round(landmarkCoverage(hand.landmarks) * hand.landmarks.length)} of ${hand.landmarks.length}`
+              : "—"}
+          </dd>
+          <dt>Hand size</dt>
+          <dd>
+            {hand
+              ? `${Math.round(handSize(hand.landmarks) * 100)}% of frame`
+              : "—"}
           </dd>
           <dt>Processed frames</dt>
           <dd>{formatNumber(tracking.stats?.fps, "fps")}</dd>
@@ -173,6 +196,10 @@ export default function TrackingCheckPage() {
           <dd>{formatNumber(tracking.stats?.avgInferenceMs, "ms")}</dd>
           <dt>Inference time (maximum)</dt>
           <dd>{formatNumber(tracking.stats?.maxInferenceMs, "ms")}</dd>
+          <dt>Loop time, detection + drawing (average)</dt>
+          <dd>{formatNumber(tracking.stats?.avgLoopMs, "ms")}</dd>
+          <dt>Loop time, detection + drawing (maximum)</dt>
+          <dd>{formatNumber(tracking.stats?.maxLoopMs, "ms")}</dd>
           <dt>Tracking losses (last {STATS_WINDOW_MS / 1000} s)</dt>
           <dd>{tracking.stats?.trackingLosses ?? "—"}</dd>
         </dl>

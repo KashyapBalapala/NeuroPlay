@@ -31,13 +31,21 @@ export type TrackingStatus =
 
 export type Delegate = "GPU" | "CPU";
 
-export type FrameQuality = "no-hand" | "low-confidence" | "tracking";
+export type FrameQuality =
+  | "no-hand"
+  | "partly-out-of-frame"
+  | "too-far"
+  | "low-handedness-confidence"
+  | "tracking";
 
 export type TrackingStats = {
   /** Processed (detected) frames per second. */
   fps: number;
   avgInferenceMs: number;
   maxInferenceMs: number;
+  /** Main-thread time per frame: detection plus overlay drawing. */
+  avgLoopMs: number;
+  maxLoopMs: number;
   /** Hand present -> absent transitions within the window. */
   trackingLosses: number;
 };

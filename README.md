@@ -18,9 +18,9 @@ NeuroPlay AI is a web-based rehabilitation platform that turns physical therapy 
 ```text
 NeuroPlay/
 ├── apps/
-│   └── web/             # Next.js frontend (not yet scaffolded)
+│   └── web/             # Next.js frontend
 ├── services/
-│   └── api/             # FastAPI backend (not yet scaffolded)
+│   └── api/             # FastAPI backend
 ├── infrastructure/
 │   └── docker/          # Docker and Compose configuration (planned)
 ├── docs/                # Project documentation
@@ -28,6 +28,8 @@ NeuroPlay/
 ├── .editorconfig
 ├── .env.example         # Template for local environment variables
 ├── .gitignore
+├── package.json         # pnpm workspace root
+├── pnpm-workspace.yaml
 └── README.md
 ```
 
@@ -41,12 +43,35 @@ NeuroPlay/
 
 Development proceeds incrementally. Each stage and feature is planned, built, and verified before the next begins. No stage is started until the previous one is stable.
 
-## Local Setup
+## Getting Started
 
-Prerequisites: Node.js, npm, Python 3, Git, Docker with Docker Compose.
+### Prerequisites
+
+- Node.js 22 (with Corepack: `corepack enable pnpm`)
+- pnpm (version pinned in `package.json`)
+- [uv](https://docs.astral.sh/uv/) (installs Python 3.13 automatically)
+- Docker with Docker Compose
 
 ```bash
 cp .env.example .env   # then fill in local values
 ```
 
-Application setup instructions will be added as the frontend and backend are scaffolded.
+### Frontend (`apps/web`)
+
+```bash
+pnpm install          # from the repository root
+pnpm dev:web          # http://localhost:3000
+pnpm lint:web
+pnpm build:web
+```
+
+### Backend (`services/api`)
+
+```bash
+cd services/api
+uv sync
+uv run uvicorn app.main:app --reload   # http://localhost:8000/health
+uv run pytest
+uv run ruff check .
+uv run mypy app
+```

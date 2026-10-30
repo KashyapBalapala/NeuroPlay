@@ -53,7 +53,15 @@ Development proceeds incrementally. Each stage and feature is planned, built, an
 - Docker with Docker Compose
 
 ```bash
-cp .env.example .env   # then fill in local values
+cp .env.example .env   # then set POSTGRES_PASSWORD to a random local value
+```
+
+### Database (PostgreSQL)
+
+```bash
+docker compose up -d db     # PostgreSQL on 127.0.0.1:5432, credentials from .env
+docker compose ps           # wait until db is "healthy"
+docker compose down         # stop (add -v to delete the data volume)
 ```
 
 ### Frontend (`apps/web`)
@@ -70,8 +78,10 @@ pnpm build:web
 ```bash
 cd services/api
 uv sync
-uv run uvicorn app.main:app --reload   # http://localhost:8000/health
-uv run pytest
+uv run alembic upgrade head            # apply migrations to the compose database
+uv run uvicorn app.main:app --reload   # http://localhost:8000/health and /health/ready
+uv run pytest -m "not integration"     # unit tests only, no Docker needed
+uv run pytest                          # all tests; integration tests start a PostgreSQL Testcontainer
 uv run ruff check .
 uv run mypy app
 ```

@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "copy-wasm": "node scripts/copy-mediapipe-wasm.mjs",
+    "dev": "pnpm copy-wasm && next dev",
+    "build": "pnpm copy-wasm && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run",
+    "test": "pnpm copy-wasm && vitest run",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.1.1",
     "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0"

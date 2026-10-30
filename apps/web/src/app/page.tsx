@@ -10,6 +10,12 @@ export default function Home() {
       >
         Camera check
       </Link>
+      <Link
+        href="/tracking-check"
+        className="underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+      >
+        Tracking check
+      </Link>
     </main>
   );
 }

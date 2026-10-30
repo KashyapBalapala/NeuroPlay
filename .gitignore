@@ -31,6 +31,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# MediaPipe WASM, copied from node_modules by apps/web/scripts/copy-mediapipe-wasm.mjs
+apps/web/public/mediapipe/wasm/
+
 # Python (services/api)
 __pycache__/
 *.py[cod]

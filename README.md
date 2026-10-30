@@ -45,9 +45,11 @@ Development proceeds incrementally. Each stage and feature is planned, built, an
 
 ## Privacy
 
-Camera features follow these rules:
+Camera and tracking features follow these rules:
 
-- Video frames never leave the browser: no uploads, recording, screenshots or storage of video or images.
+- Video frames and hand landmarks never leave the browser: no uploads, recording, screenshots, logging or storage of video, images or landmarks.
+- Hand tracking (MediaPipe Hand Landmarker) runs entirely in the browser. The model and WASM runtime are served from the app's own origin; nothing loads from a CDN.
+- A `Content-Security-Policy: connect-src 'self'` header blocks requests to other origins, including the usage metrics `@mediapipe/tasks-vision` would otherwise send to Google.
 - The camera is only requested after the user presses a button, never on page load.
 - All camera tracks are stopped when the user stops the camera, leaves the page or the component unmounts, so the camera indicator light turns off.
 
@@ -83,7 +85,9 @@ pnpm test:web         # Vitest + Testing Library (jsdom)
 pnpm build:web
 ```
 
-Open http://localhost:3000/camera-check to test webcam access, permissions and device selection. Camera access needs HTTPS or `localhost`.
+Open http://localhost:3000/camera-check to test webcam access, permissions and device selection, and http://localhost:3000/tracking-check to test hand tracking (landmark overlay, detected hand, confidence, frame rate and inference time). Camera access needs HTTPS or `localhost`.
+
+`dev`, `build` and `test` first copy MediaPipe's WASM files from `node_modules` into `apps/web/public/mediapipe/wasm/` (Git-ignored). The hand model is committed at `apps/web/public/models/hand_landmarker.task`; see [docs/models.md](docs/models.md).
 
 ### Backend (`services/api`)
 

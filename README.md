@@ -43,6 +43,14 @@ NeuroPlay/
 
 Development proceeds incrementally. Each stage and feature is planned, built, and verified before the next begins. No stage is started until the previous one is stable.
 
+## Privacy
+
+Camera features follow these rules:
+
+- Video frames never leave the browser: no uploads, recording, screenshots or storage of video or images.
+- The camera is only requested after the user presses a button, never on page load.
+- All camera tracks are stopped when the user stops the camera, leaves the page or the component unmounts, so the camera indicator light turns off.
+
 ## Getting Started
 
 ### Prerequisites
@@ -74,6 +82,8 @@ pnpm typecheck:web    # generates Next.js route types, then runs tsc
 pnpm test:web         # Vitest + Testing Library (jsdom)
 pnpm build:web
 ```
+
+Open http://localhost:3000/camera-check to test webcam access, permissions and device selection. Camera access needs HTTPS or `localhost`.
 
 ### Backend (`services/api`)
 
